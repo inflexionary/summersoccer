@@ -289,16 +289,16 @@
       <div class="home-block">
         <h3>Match-day weather</h3>
         <div class="weather-card">
-          <div class="weather-icon icon" style="color: var(--gold);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <div class="weather-icon icon" id="weather-icon" style="color: var(--gold);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
             <circle cx="12" cy="12" r="4.6"/>
             <path d="M12 2.4 V5.2 M12 18.8 V21.6 M21.6 12 H18.8 M5.2 12 H2.4 M18.6 5.4 L16.6 7.4 M7.4 16.6 L5.4 18.6 M18.6 18.6 L16.6 16.6 M7.4 7.4 L5.4 5.4"/>
           </svg></div>
           <div>
-            <div class="weather-temp">22&deg; / 12&deg;C</div>
-            <div class="weather-sub">Clear skies, 0% chance of rain &middot; sunset ~7:04 PM</div>
+            <div class="weather-temp" id="weather-temp">22&deg; / 12&deg;C</div>
+            <div class="weather-sub" id="weather-sub">Clear skies, 0% chance of rain &middot; sunset ~7:04 PM</div>
           </div>
         </div>
-        <div class="weather-note">Snapshot for Fri 9 Oct, Sydney &mdash; last refreshed 2 Oct. A published page can't poll a live weather feed, so this updates whenever it's refreshed for you &mdash; just ask closer to the date for the latest forecast. Sunset times are astronomical and reliable well in advance.</div>
+        <div class="weather-note" id="weather-note">Loading live forecast&hellip;</div>
       </div>
 
       <div class="home-block">
@@ -974,6 +974,74 @@
 
   renderResultsTab();
   renderUpcomingFixtures();
+
+  // --- Live weather (Open-Meteo, free, no API key, CORS-enabled) ---
+  // Works when hosted on a real static host (e.g. GitHub Pages). Will fail silently
+  // inside sandboxed preview environments that block outbound fetch — that's expected.
+  const ROUND_DATES = {
+    'Round 1': '2026-10-09', 'Round 2': '2026-10-16', 'Round 3': '2026-10-23',
+    'Round 4': '2026-10-30', 'Round 5': '2026-11-06', 'Round 6': '2026-11-13',
+    'Round 7': '2026-11-20', 'Round 8': '2026-11-27', 'Round 9': '2026-12-04'
+  };
+  const WEATHER_ICONS = {
+    sun: `<circle cx="12" cy="12" r="4.6"/><path d="M12 2.4 V5.2 M12 18.8 V21.6 M21.6 12 H18.8 M5.2 12 H2.4 M18.6 5.4 L16.6 7.4 M7.4 16.6 L5.4 18.6 M18.6 18.6 L16.6 16.6 M7.4 7.4 L5.4 5.4"/>`,
+    cloud: `<path d="M7 18 H16.5 A3.5 3.5 0 0 0 16 11.1 A5 5 0 0 0 6.3 12.4 A3.2 3.2 0 0 0 7 18 Z"/>`,
+    rain: `<path d="M7 15 H15.5 A3.2 3.2 0 0 0 15 9.1 A4.6 4.6 0 0 0 6.2 10.3 A2.9 2.9 0 0 0 7 15 Z"/><path d="M8 18.5 L7 20.5 M12 18.5 L11 20.5 M16 18.5 L15 20.5"/>`
+  };
+  function weatherDescription(code) {
+    // WMO weather codes (Open-Meteo)
+    if (code === 0) return { text: 'Clear skies', icon: 'sun' };
+    if ([1, 2].includes(code)) return { text: 'Mostly clear', icon: 'sun' };
+    if (code === 3) return { text: 'Overcast', icon: 'cloud' };
+    if ([45, 48].includes(code)) return { text: 'Foggy', icon: 'cloud' };
+    if ([51, 53, 55, 56, 57].includes(code)) return { text: 'Drizzle', icon: 'rain' };
+    if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return { text: 'Rain', icon: 'rain' };
+    if ([95, 96, 99].includes(code)) return { text: 'Thunderstorms', icon: 'rain' };
+    return { text: 'Mixed conditions', icon: 'cloud' };
+  }
+
+  async function loadLiveWeather() {
+    const tempEl = document.getElementById('weather-temp');
+    const subEl = document.getElementById('weather-sub');
+    const noteEl = document.getElementById('weather-note');
+    const iconEl = document.getElementById('weather-icon');
+    if (!tempEl) return;
+
+    const playedRounds = new Set(RESULTS.map(r => r.round));
+    const nextRound = FIXTURES.find(f => !playedRounds.has(f.round))?.round;
+    const targetDate = ROUND_DATES[nextRound];
+    if (!targetDate) {
+      noteEl.textContent = 'No upcoming round found to fetch a forecast for.';
+      return;
+    }
+
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=-33.88&longitude=151.21&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode&timezone=Australia%2FSydney&start_date=${targetDate}&end_date=${targetDate}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Weather API error ' + res.status);
+      const data = await res.json();
+      if (!data.daily || !data.daily.time || data.daily.time.length === 0) {
+        throw new Error('No forecast data for that date yet');
+      }
+      const max = Math.round(data.daily.temperature_2m_max[0]);
+      const min = Math.round(data.daily.temperature_2m_min[0]);
+      const rain = data.daily.precipitation_probability_max[0];
+      const code = data.daily.weathercode[0];
+      const desc = weatherDescription(code);
+
+      tempEl.innerHTML = `${max}&deg; / ${min}&deg;C`;
+      subEl.textContent = `${desc.text}, ${rain}% chance of rain`;
+      if (iconEl && WEATHER_ICONS[desc.icon]) {
+        iconEl.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">${WEATHER_ICONS[desc.icon]}</svg>`;
+      }
+      const d = new Date(targetDate + 'T00:00:00');
+      const dateLabel = d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
+      noteEl.textContent = `Live forecast for ${dateLabel}, Sydney — updates automatically whenever this page loads.`;
+    } catch (err) {
+      noteEl.textContent = 'Live forecast unavailable right now (forecasts only cover roughly the next 10–16 days) — check back closer to match day.';
+    }
+  }
+  loadLiveWeather();
 </script>
 
 </body>
