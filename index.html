@@ -175,8 +175,24 @@
   .form-badge.l { background: #C5432E; }
   .form-none { color: var(--muted); opacity: .5; }
   .fx-form { margin-top: 7px; }
-  .lr-list { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .lr-list { display: grid; grid-template-columns: 1fr 1fr; column-gap: 36px; }
   @media (max-width: 760px) { .lr-list { grid-template-columns: 1fr; } }
+  .lr-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 500; cursor: pointer; }
+  .lr-row .side { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lr-row .side.home { justify-content: flex-end; text-align: right; }
+  .lr-score { flex-shrink: 0; min-width: 54px; text-align: center; font-family: 'Arvo', serif; font-weight: 700; font-size: 14px; background: var(--cream); border-radius: 8px; padding: 4px 8px; transition: background .12s, color .12s; }
+  .lr-row:hover .lr-score { background: var(--pitch); color: #fff; }
+  .lr-hint { font-size: 12px; color: var(--muted); margin-top: 10px; }
+  /* big match card (drawer) */
+  .mc.big .mc-top { padding: 26px 12px 22px; }
+  .mc.big .mc-crest { width: 78px; height: 78px; }
+  .mc.big .mc-crest img { width: 58px; height: 58px; }
+  .mc.big .mc-team { font-size: 16px; gap: 10px; }
+  .mc.big .mc-score { font-size: 40px; padding: 14px 22px; }
+  .mc.big .mc-scorers { padding: 18px 18px 20px; font-size: 16px; font-weight: 600; color: var(--ink); gap: 18px; }
+  .mc.big .mc-col { gap: 9px; }
+  .mc.big .mc-sc svg { width: 18px; height: 18px; color: var(--pitch); }
+  .mc-noscorers { text-align: center; color: var(--muted); font-size: 13px; padding: 12px 16px 16px; }
   .mc { border-radius: 16px; overflow: hidden; background: var(--card); border: 1px solid var(--line); box-shadow: 0 2px 10px rgba(40,20,10,0.06); }
   .mc-top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; color: #fff; padding: 18px 10px 16px; }
   .mc-team { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; font-weight: 700; font-size: 14px; line-height: 1.2; min-width: 0; }
@@ -1109,7 +1125,7 @@
   }
 
   function openScorersModal(result) {
-    openModal(`<div style="margin-top:6px"><div class="modal-section" style="margin-top:0"><h4>${result.round}</h4></div>${matchCardHTML(result)}</div>`);
+    openModal(`<div style="margin-top:6px"><div class="modal-section" style="margin-top:0"><h4>${result.round}</h4></div>${matchCardHTML(result, true)}</div>`);
   }
 
   document.querySelectorAll('#team-grid .team-card').forEach(card => {
@@ -1299,7 +1315,7 @@
     'Green Machine': '#1F6B3A', 'Soccer Dads': '#137C74', 'Donkeys': '#4F6D8F', 'Dark Blue': '#1B2A6B',
     'Soccerwhos': '#5B2A86', 'Off Rangers': '#4A5560', 'Udogie Style': '#2A2A2A', 'Loose Cannons': '#C0262D'
   };
-  function matchCardHTML(r) {
+  function matchCardHTML(r, big) {
     const hc = TEAM_CARD_COLORS[r.home] || '#444', ac = TEAM_CARD_COLORS[r.away] || '#444';
     const crest = n => `<span class="mc-crest"><img src="${TEAM_LOGOS[n]}" alt=""></span>`;
     const col = (team, cls) => {
@@ -1309,13 +1325,13 @@
       return `<div class="mc-col ${cls}">${items}</div>`;
     };
     const hasScorers = (r.scorers || []).length > 0;
-    return `<div class="mc">
+    return `<div class="mc${big ? ' big' : ''}">
       <div class="mc-top" style="background: linear-gradient(90deg, ${hc} 0 50%, ${ac} 50% 100%)">
         <div class="mc-team">${crest(r.home)}<span>${r.home}</span></div>
         <div class="mc-score">${r.homeScore} - ${r.awayScore}</div>
         <div class="mc-team">${crest(r.away)}<span>${r.away}</span></div>
       </div>
-      <div class="mc-scorers">${hasScorers ? col(r.home, 'home') + col(r.away, 'away') : ''}</div>
+      ${hasScorers ? `<div class="mc-scorers">${col(r.home, 'home') + col(r.away, 'away')}</div>` : (big ? '<div class="mc-noscorers">No scorers recorded</div>' : '')}
     </div>`;
   }
 
@@ -1327,7 +1343,18 @@
     const last = Math.max(...RESULTS.map(num));
     const games = RESULTS.map((r, i) => ({ r, i })).filter(x => num(x.r) === last);
     document.getElementById('latest-results-title').innerHTML = `Latest results &middot; Round ${last}`;
-    document.getElementById('latest-results-list').innerHTML = games.map(({ r }) => matchCardHTML(r)).join('');
+    document.getElementById('latest-results-list').innerHTML = games.map(({ r, i }) => `
+      <div class="lr-row" data-result-index="${i}">
+        <span class="side home">${r.home}${teamLogo(r.home)}</span>
+        <span class="lr-score">${r.homeScore} &ndash; ${r.awayScore}</span>
+        <span class="side away">${teamLogo(r.away)}${r.away}</span>
+      </div>`).join('');
+    document.querySelectorAll('#latest-results-list .lr-row').forEach(row => {
+      row.addEventListener('click', () => openScorersModal(RESULTS[parseInt(row.dataset.resultIndex)]));
+    });
+    let hint = document.getElementById('latest-results-hint');
+    if (!hint) { hint = document.createElement('p'); hint.id = 'latest-results-hint'; hint.className = 'lr-hint'; box.appendChild(hint); }
+    hint.textContent = 'Tap a game for the match card and goalscorers.';
     box.style.display = '';
   }
 
