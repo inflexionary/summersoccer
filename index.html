@@ -175,6 +175,20 @@
   .form-badge.l { background: #C5432E; }
   .form-none { color: var(--muted); opacity: .5; }
   .fx-form { margin-top: 7px; }
+  .finals-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 760px) { .finals-grid { grid-template-columns: 1fr; } }
+  .fg-stage { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin: 14px 0 8px; }
+  .fg-stage:first-child { margin-top: 0; }
+  .fg { border: 1px solid var(--line); border-radius: 12px; margin-bottom: 10px; overflow: hidden; background: var(--card); }
+  .fg-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); background: var(--cream); padding: 6px 12px; }
+  .fg-team { display: flex; align-items: center; gap: 8px; padding: 9px 12px; font-size: 14px; border-top: 1px solid var(--line); }
+  .fg-team:first-of-type { border-top: none; }
+  .fg-team .seed { width: 20px; font-size: 12px; color: var(--muted); font-weight: 600; flex-shrink: 0; }
+  .fg-team .nm { flex: 1; min-width: 0; }
+  .fg-team .sc { font-family: 'Arvo', serif; font-weight: 700; font-size: 16px; }
+  .fg-team.tbd .nm { color: var(--muted); font-style: italic; }
+  .fg-team.win { background: rgba(233,183,48,0.14); font-weight: 700; }
+  .fg-team.clickable { cursor: pointer; }
   .rank-medal { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; font-size: 12px; font-weight: 700; color: #fff; }
   .rank-medal.r1 { background: linear-gradient(135deg, #E9B730, #C98F0A); box-shadow: 0 1px 4px rgba(201,143,10,.5); }
   .rank-medal.r2 { background: linear-gradient(135deg, #BFC4CA, #8D949C); }
@@ -335,6 +349,7 @@
     <button class="tab-btn" role="tab" data-tab="fixtures" aria-selected="false">Fixtures</button>
     <button class="tab-btn" role="tab" data-tab="calendar" aria-selected="false">Calendar</button>
     <button class="tab-btn" role="tab" data-tab="results" aria-selected="false">Results</button>
+    <button class="tab-btn" role="tab" data-tab="finals" aria-selected="false">Finals</button>
     <button class="tab-btn" role="tab" data-tab="golden-boot" aria-selected="false">Golden Boot</button>
     <button class="tab-btn" role="tab" data-tab="teams" aria-selected="false">Teams</button>
     <button class="tab-btn" role="tab" data-tab="manager-info" aria-selected="false">Manager Info</button>
@@ -436,6 +451,27 @@
           <tr><td>8</td><td>Loose Cannons</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
         </tbody>
       </table>
+    </div>
+  </section>
+
+  <section id="finals" class="panel" role="tabpanel">
+    <div class="section-head">
+      <h2>Finals</h2>
+      <p>Fri 11 December &middot; Top 4 play for the Championship, bottom 4 play for the Plate. Seeded from the final table.</p>
+    </div>
+    <div class="notice" id="finals-provisional" style="display:none">Provisional seeding &mdash; based on the table as it stands. Final seeds are locked in after Round 9.</div>
+    <div class="finals-grid">
+      <div class="home-block"><h3>Championship &middot; 1st&ndash;4th</h3><div id="finals-champ"></div></div>
+      <div class="home-block"><h3>Plate &middot; 5th&ndash;8th</h3><div id="finals-plate"></div></div>
+    </div>
+    <div class="info-card" style="margin-top:20px">
+      <h3>How finals night works</h3>
+      <ul>
+        <li>Each group plays a semi-final (1st v 4th, 2nd v 3rd within the group) then a final &mdash; everyone plays 2 games.</li>
+        <li>Higher seed is the home team, chooses kit colours and ends.</li>
+        <li>A draw after full time goes to a penalty shootout (3 kicks each, then sudden death).</li>
+        <li>No 3rd-place games. 20-minute halves, self-refereed.</li>
+      </ul>
     </div>
   </section>
 
@@ -1288,11 +1324,29 @@
     return out;
   }
 
+  // Finals rows use Round = C-SF1, C-SF2, C-F (Championship) or P-SF1, P-SF2, P-F (Plate).
+  // Optional 8th column = winner, only needed if the game was drawn (penalties).
+  const FINALS_RESULTS = {};
+  function finalsKey(text) {
+    const t = (text || '').trim().toLowerCase().replace(/[\s_]+/g, '-');
+    return /^(c|p)-(sf1|sf2|f)$/.test(t) ? t.toUpperCase() : null;
+  }
+
   function resultsFromRows(rows) {
+    Object.keys(FINALS_RESULTS).forEach(k => delete FINALS_RESULTS[k]);
     const out = [];
     rows.forEach(c => {
       const home = canonicalTeam(c[1]), away = canonicalTeam(c[2]);
       const hs = parseInt(c[3], 10), as = parseInt(c[4], 10);
+      const fKey = finalsKey(c[0]);
+      if (fKey) {
+        if (home && away && !isNaN(hs) && !isNaN(as)) {
+          let winner = hs > as ? home : as > hs ? away : canonicalTeam(c[7]);
+          FINALS_RESULTS[fKey] = { home, away, homeScore: hs, awayScore: as, winner,
+            scorers: [...parseScorers(c[5], home), ...parseScorers(c[6], away)] };
+        }
+        return;
+      }
       const roundNum = (c[0] || '').match(/\d+/);
       if (!(c[3] || '').trim() && !(c[4] || '').trim()) return; // not played yet
       if (!home || !away || isNaN(hs) || isNaN(as) || !roundNum) {
@@ -1378,11 +1432,60 @@
     box.style.display = '';
   }
 
+  const FINALS_GAMES = {
+    'C-SF1': ['Semi-final 1', '5:30 PM · Pitch A'], 'C-SF2': ['Semi-final 2', '5:30 PM · Pitch B'],
+    'P-SF1': ['Semi-final 1', '6:20 PM · Pitch A'], 'P-SF2': ['Semi-final 2', '6:20 PM · Pitch B'],
+    'C-F': ['Championship Final', '7:10 PM · Pitch A'], 'P-F': ['Plate Final', '7:10 PM · Pitch B']
+  };
+
+  function renderFinals() {
+    const champEl = document.getElementById('finals-champ'), plateEl = document.getElementById('finals-plate');
+    if (!champEl || !plateEl) return;
+    const seeds = computeStandings().map(x => x.team);
+    document.getElementById('finals-provisional').style.display = RESULTS.length < 36 ? '' : 'none';
+
+    const semiTeams = {
+      'C-SF1': [[seeds[0], 1], [seeds[3], 4]], 'C-SF2': [[seeds[1], 2], [seeds[2], 3]],
+      'P-SF1': [[seeds[4], 5], [seeds[7], 8]], 'P-SF2': [[seeds[5], 6], [seeds[6], 7]]
+    };
+    const winnerOf = key => (FINALS_RESULTS[key] || {}).winner || null;
+    const seedOf = t => { const i = seeds.indexOf(t); return i >= 0 ? i + 1 : ''; };
+    const teamsFor = key => {
+      if (semiTeams[key]) return semiTeams[key].map(([t, n]) => ({ team: t, seed: n }));
+      const d = key[0];
+      return [`${d}-SF1`, `${d}-SF2`].map((sf, i) => {
+        const w = winnerOf(sf);
+        return w ? { team: w, seed: seedOf(w) } : { team: null, label: `Winner of Semi-final ${i + 1}` };
+      });
+    };
+
+    const gameHTML = key => {
+      const [title, when] = FINALS_GAMES[key];
+      const res = FINALS_RESULTS[key];
+      const ts = teamsFor(key);
+      const rows = ts.map(t => {
+        if (!t.team) return `<div class="fg-team tbd"><span class="seed"></span><span class="nm">${t.label}</span></div>`;
+        let score = '';
+        if (res && ts.every(x => x.team) && [res.home, res.away].includes(t.team)) {
+          score = t.team === res.home ? res.homeScore : res.awayScore;
+        }
+        const win = res && res.winner === t.team;
+        return `<div class="fg-team clickable${win ? ' win' : ''}" data-team="${t.team}"><span class="seed">${t.seed}</span><span class="nm">${teamLogo(t.team)}${t.team}</span><span class="sc">${score}</span></div>`;
+      }).join('');
+      return `<div class="fg"><div class="fg-meta"><span>${title}</span><span>${when}</span></div>${rows}</div>`;
+    };
+
+    const col = d => `<div class="fg-stage">Semi-finals</div>${gameHTML(d + '-SF1')}${gameHTML(d + '-SF2')}<div class="fg-stage">Final</div>${gameHTML(d + '-F')}`;
+    champEl.innerHTML = col('C');
+    plateEl.innerHTML = col('P');
+    document.querySelectorAll('#finals .fg-team[data-team]').forEach(el => el.addEventListener('click', () => openTeamModal(el.dataset.team)));
+  }
+
   function renderGoldenBoot() {
     const body = document.getElementById('boot-body');
     if (!body) return;
     const tally = {};
-    RESULTS.forEach(r => (r.scorers || []).forEach(x => {
+    [...RESULTS, ...Object.values(FINALS_RESULTS)].forEach(r => (r.scorers || []).forEach(x => {
       const key = x.team + '|' + x.player.trim().toLowerCase();
       if (!tally[key]) tally[key] = { player: x.player.trim(), team: x.team, goals: 0 };
       tally[key].goals++;
@@ -1402,6 +1505,7 @@
   }
 
   function refreshAll() {
+    renderFinals();
     renderGoldenBoot();
     renderLatestResults();
     renderResultsTab();
