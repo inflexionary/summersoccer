@@ -175,6 +175,12 @@
   .form-badge.l { background: #C5432E; }
   .form-none { color: var(--muted); opacity: .5; }
   .fx-form { margin-top: 7px; }
+  .rank-medal { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; font-size: 12px; font-weight: 700; color: #fff; }
+  .rank-medal.r1 { background: linear-gradient(135deg, #E9B730, #C98F0A); box-shadow: 0 1px 4px rgba(201,143,10,.5); }
+  .rank-medal.r2 { background: linear-gradient(135deg, #BFC4CA, #8D949C); }
+  .rank-medal.r3 { background: linear-gradient(135deg, #D39A63, #A9672F); }
+  tr.boot-lead td { background: rgba(233,183,48,0.12); font-weight: 600; }
+  .boot-goals { font-family: 'Arvo', serif; font-weight: 700; font-size: 16px; }
   .lr-list { display: grid; grid-template-columns: 1fr 1fr; column-gap: 36px; }
   @media (max-width: 760px) { .lr-list { grid-template-columns: 1fr; } }
   .lr-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 500; cursor: pointer; }
@@ -329,6 +335,7 @@
     <button class="tab-btn" role="tab" data-tab="fixtures" aria-selected="false">Fixtures</button>
     <button class="tab-btn" role="tab" data-tab="calendar" aria-selected="false">Calendar</button>
     <button class="tab-btn" role="tab" data-tab="results" aria-selected="false">Results</button>
+    <button class="tab-btn" role="tab" data-tab="golden-boot" aria-selected="false">Golden Boot</button>
     <button class="tab-btn" role="tab" data-tab="teams" aria-selected="false">Teams</button>
     <button class="tab-btn" role="tab" data-tab="manager-info" aria-selected="false">Manager Info</button>
     <button class="tab-btn" role="tab" data-tab="payment" aria-selected="false">Payment</button>
@@ -428,6 +435,19 @@
           <tr><td>7</td><td>Udogie Style</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
           <tr><td>8</td><td>Loose Cannons</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
         </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="golden-boot" class="panel" role="tabpanel">
+    <div class="section-head">
+      <h2>Golden Boot</h2>
+      <p>Top scorers across the season. Updated as goalscorers are recorded after each round.</p>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Goals</th></tr></thead>
+        <tbody id="boot-body"></tbody>
       </table>
     </div>
   </section>
@@ -1358,7 +1378,31 @@
     box.style.display = '';
   }
 
+  function renderGoldenBoot() {
+    const body = document.getElementById('boot-body');
+    if (!body) return;
+    const tally = {};
+    RESULTS.forEach(r => (r.scorers || []).forEach(x => {
+      const key = x.team + '|' + x.player.trim().toLowerCase();
+      if (!tally[key]) tally[key] = { player: x.player.trim(), team: x.team, goals: 0 };
+      tally[key].goals++;
+    }));
+    const list = Object.values(tally).sort((a, b) => b.goals - a.goals || a.player.localeCompare(b.player));
+    if (list.length === 0) {
+      body.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--muted); padding: 24px;">No goalscorers recorded yet &mdash; check back after Round 1.</td></tr>`;
+      return;
+    }
+    let rank = 0, prev = null;
+    body.innerHTML = list.map((x, i) => {
+      if (x.goals !== prev) { rank = i + 1; prev = x.goals; }
+      const medal = rank <= 3 ? `<span class="rank-medal r${rank}">${rank}</span>` : rank;
+      return `<tr class="${rank === 1 ? 'boot-lead' : ''}" data-team="${x.team}" style="cursor:pointer"><td>${medal}</td><td>${x.player}</td><td>${teamLogo(x.team)}${x.team}</td><td class="boot-goals">${x.goals}</td></tr>`;
+    }).join('');
+    body.querySelectorAll('tr[data-team]').forEach(tr => tr.addEventListener('click', () => openTeamModal(tr.dataset.team)));
+  }
+
   function refreshAll() {
+    renderGoldenBoot();
     renderLatestResults();
     renderResultsTab();
     renderStandings();
