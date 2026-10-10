@@ -459,7 +459,7 @@
       <h2>Finals</h2>
       <p>Fri 11 December &middot; Top 4 play for the Championship, bottom 4 play for the Plate. Seeded from the final table.</p>
     </div>
-    <div class="notice" id="finals-provisional" style="display:none">Provisional seeding &mdash; based on the table as it stands. Final seeds are locked in after Round 9.</div>
+    <div class="notice" id="finals-provisional" style="display:none"><strong>Teams not locked in.</strong> Seeding is provisional and based on the table as it stands &mdash; final match-ups are confirmed once Round 9 is played.</div>
     <div class="finals-grid">
       <div class="home-block"><h3>Championship &middot; 1st&ndash;4th</h3><div id="finals-champ"></div></div>
       <div class="home-block"><h3>Plate &middot; 5th&ndash;8th</h3><div id="finals-plate"></div></div>
@@ -1529,6 +1529,14 @@
     } catch (err) {
       console.warn('Could not load results feed; showing built-in results only.', err);
     }
+  }
+
+  // Finals tab is hidden until the format is confirmed with the other organisers.
+  // Change to true to show it.
+  const SHOW_FINALS = false;
+  if (!SHOW_FINALS) {
+    const ft = document.querySelector('.tab-btn[data-tab="finals"]'); if (ft) ft.remove();
+    const fp = document.getElementById('finals'); if (fp) fp.remove();
   }
 
   refreshAll();
