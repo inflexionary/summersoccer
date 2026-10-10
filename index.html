@@ -175,6 +175,11 @@
   .form-badge.l { background: #C5432E; }
   .form-none { color: var(--muted); opacity: .5; }
   .fx-form { margin-top: 7px; }
+  .mini-table tr.me td { background: rgba(209,98,26,0.10); font-weight: 700; }
+  .boot-tag { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 999px; margin-left: 6px; color: #fff; vertical-align: 1px; }
+  .boot-tag.r1 { background: linear-gradient(135deg, #E9B730, #C98F0A); }
+  .boot-tag.r2 { background: linear-gradient(135deg, #BFC4CA, #8D949C); }
+  .boot-tag.r3 { background: linear-gradient(135deg, #D39A63, #A9672F); }
   .finals-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
   @media (max-width: 760px) { .finals-grid { grid-template-columns: 1fr; } }
   .fg-stage { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin: 14px 0 8px; }
@@ -1158,9 +1163,21 @@
         }).join('')
       : `<p class="modal-empty">No fixtures found.</p>`;
 
+    const standings = computeStandings();
+    const pos = standings.findIndex(x => x.team === teamName);
+    const start = Math.max(0, Math.min(pos - 2, standings.length - 5));
+    const tableHTML = `<table class="mini-table"><thead><tr><th>#</th><th>Team</th><th>P</th><th>GD</th><th>Pts</th></tr></thead><tbody>${
+      standings.slice(start, start + 5).map((x, i) => `<tr${x.team === teamName ? ' class="me"' : ''}><td>${start + i + 1}</td><td>${teamLogo(x.team)}${x.team}</td><td>${x.p}</td><td>${x.gd > 0 ? '+' : ''}${x.gd}</td><td><strong>${x.pts}</strong></td></tr>`).join('')
+    }</tbody></table>`;
+
+    const boot = goldenBootList();
     const scorers = topScorersForTeam(teamName);
     const scorersHTML = scorers.length
-      ? scorers.map(([player, goals]) => `<div class="scorer-row"><span>${player}</span><span>${goals} ${goals === 1 ? 'goal' : 'goals'}</span></div>`).join('')
+      ? scorers.map(([player, goals]) => {
+          const b = boot.find(x => x.team === teamName && x.player.toLowerCase() === player.toLowerCase());
+          const tag = b && b.rank <= 3 ? ` <span class="boot-tag r${b.rank}">Golden Boot #${b.rank}</span>` : '';
+          return `<div class="scorer-row"><span>${player}${tag}</span><span>${goals} ${goals === 1 ? 'goal' : 'goals'}</span></div>`;
+        }).join('')
       : `<p class="modal-empty">No goals logged yet this season.</p>`;
 
     openModal(`
@@ -1173,6 +1190,7 @@
         </div>
       </div>
       <div class="modal-section"><h4>Fixtures &amp; results</h4>${fixturesHTML}</div>
+      <div class="modal-section"><h4>In the table</h4>${tableHTML}</div>
       <div class="modal-section"><h4>Top scorers</h4>${scorersHTML}</div>
     `);
     document.querySelectorAll('#modal-content .modal-fixture-row[data-result-index]').forEach(row => {
@@ -1481,9 +1499,7 @@
     document.querySelectorAll('#finals .fg-team[data-team]').forEach(el => el.addEventListener('click', () => openTeamModal(el.dataset.team)));
   }
 
-  function renderGoldenBoot() {
-    const body = document.getElementById('boot-body');
-    if (!body) return;
+  function goldenBootList() {
     const tally = {};
     [...RESULTS, ...Object.values(FINALS_RESULTS)].forEach(r => (r.scorers || []).forEach(x => {
       const key = x.team + '|' + x.player.trim().toLowerCase();
@@ -1491,13 +1507,21 @@
       tally[key].goals++;
     }));
     const list = Object.values(tally).sort((a, b) => b.goals - a.goals || a.player.localeCompare(b.player));
+    let rank = 0, prev = null;
+    list.forEach((x, i) => { if (x.goals !== prev) { rank = i + 1; prev = x.goals; } x.rank = rank; });
+    return list;
+  }
+
+  function renderGoldenBoot() {
+    const body = document.getElementById('boot-body');
+    if (!body) return;
+    const list = goldenBootList();
     if (list.length === 0) {
       body.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--muted); padding: 24px;">No goalscorers recorded yet &mdash; check back after Round 1.</td></tr>`;
       return;
     }
-    let rank = 0, prev = null;
     body.innerHTML = list.map((x, i) => {
-      if (x.goals !== prev) { rank = i + 1; prev = x.goals; }
+      const rank = x.rank;
       const medal = rank <= 3 ? `<span class="rank-medal r${rank}">${rank}</span>` : rank;
       return `<tr class="${rank === 1 ? 'boot-lead' : ''}" data-team="${x.team}" style="cursor:pointer"><td>${medal}</td><td>${x.player}</td><td>${teamLogo(x.team)}${x.team}</td><td class="boot-goals">${x.goals}</td></tr>`;
     }).join('');
