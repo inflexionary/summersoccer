@@ -299,6 +299,9 @@
   .modal-team-header h3 { font-family: 'Arvo', serif; font-size: 22px; margin: 0 0 4px; color: var(--ink); }
   .modal-section { margin-top: 20px; }
   .modal-section h4 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--pitch); margin: 0 0 10px; }
+  .modal-crumb { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; padding: 4px 0; margin: 0 0 10px; font: 600 13px Inter, sans-serif; color: var(--pitch); cursor: pointer; }
+  .modal-crumb:hover { text-decoration: underline; }
+  .modal-crumb b { color: var(--muted); font-weight: 600; }
   .modal-fixture-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
   .modal-fixture-row:last-child { border-bottom: none; }
   .modal-fixture-row .r-label { color: var(--muted); font-size: 12px; width: 50px; flex-shrink: 0; }
@@ -1194,12 +1197,17 @@
       <div class="modal-section"><h4>Top scorers</h4>${scorersHTML}</div>
     `);
     document.querySelectorAll('#modal-content .modal-fixture-row[data-result-index]').forEach(row => {
-      row.addEventListener('click', () => openScorersModal(RESULTS[parseInt(row.dataset.resultIndex)]));
+      row.addEventListener('click', () => openScorersModal(RESULTS[parseInt(row.dataset.resultIndex)], teamName));
     });
   }
 
-  function openScorersModal(result) {
-    openModal(`<div style="margin-top:6px"><div class="modal-section" style="margin-top:0"><h4>${result.round}</h4></div>${matchCardHTML(result, true)}</div>`);
+  function openScorersModal(result, fromTeam) {
+    const crumb = fromTeam
+      ? `<button type="button" class="modal-crumb" id="modal-back">&larr; ${fromTeam} <span style="opacity:.5">&rsaquo;</span> <b>${result.round}</b></button>`
+      : '';
+    openModal(`<div style="margin-top:6px">${crumb}<div class="modal-section" style="margin-top:0"><h4>${result.round}</h4></div>${matchCardHTML(result, true)}</div>`);
+    const back = document.getElementById('modal-back');
+    if (back) back.addEventListener('click', () => openTeamModal(fromTeam));
   }
 
   document.querySelectorAll('#team-grid .team-card').forEach(card => {
