@@ -1,4 +1,3 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -169,10 +168,29 @@
   .fx-form .form-dots.home { justify-content: flex-end; }
   .fx-form .form-dots.away { justify-content: flex-start; }
   .fx-form .vs-spacer { width: 26px; flex-shrink: 0; }
-  .form-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-  .form-dot.w { background: #2E8B40; }
-  .form-dot.d { background: #C9C4BB; }
-  .form-dot.l { background: #C5432E; }
+  .form-badges { display: inline-flex; gap: 4px; align-items: center; }
+  .form-badge { width: 20px; height: 20px; border-radius: 50%; font-size: 10.5px; font-weight: 700; color: #fff; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .form-badge.w { background: #2E8B40; }
+  .form-badge.d { background: #A9A39A; }
+  .form-badge.l { background: #C5432E; }
+  .form-none { color: var(--muted); opacity: .5; }
+  .fx-form { margin-top: 7px; }
+  .lr-list { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .lr-list { grid-template-columns: 1fr; } }
+  .mc { border-radius: 16px; overflow: hidden; background: var(--card); border: 1px solid var(--line); box-shadow: 0 2px 10px rgba(40,20,10,0.06); }
+  .mc-top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; color: #fff; padding: 18px 10px 16px; }
+  .mc-team { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; font-weight: 700; font-size: 14px; line-height: 1.2; min-width: 0; }
+  .mc-crest { width: 58px; height: 58px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+  .mc-crest img { width: 42px; height: 42px; object-fit: contain; }
+  .mc-score { background: #fff; color: var(--ink); font-family: 'Arvo', serif; font-weight: 700; font-size: 28px; line-height: 1; padding: 12px 18px; border-radius: 16px; margin: 0 6px; white-space: nowrap; box-shadow: 0 3px 10px rgba(0,0,0,0.18); }
+  .mc-scorers { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 12px 16px 14px; font-size: 13px; }
+  .mc-scorers:empty { display: none; }
+  .mc-col { display: flex; flex-direction: column; gap: 5px; }
+  .mc-col.home { align-items: flex-end; text-align: right; }
+  .mc-col.away { align-items: flex-start; text-align: left; }
+  .mc-sc { display: flex; align-items: center; gap: 6px; }
+  .mc-col.home .mc-sc { flex-direction: row-reverse; }
+  .mc-sc svg { width: 14px; height: 14px; flex-shrink: 0; color: var(--muted); }
   .mini-table { width: 100%; font-size: 13px; }
   .mini-table th { text-align: left; color: var(--muted); font-weight: 600; padding: 4px 6px; border-bottom: 1px solid var(--line); }
   .mini-table td { padding: 6px 6px; border-bottom: 1px solid var(--line); color: var(--ink); }
@@ -313,6 +331,11 @@
     </div>
 
     <div class="home-grid">
+      <div class="home-block span2" id="latest-results" style="display:none">
+        <h3 id="latest-results-title">Latest results</h3>
+        <div class="lr-list" id="latest-results-list"></div>
+      </div>
+
       <div class="home-block">
         <h3>Upcoming fixtures</h3>
         <div id="upcoming-fixtures-list"></div>
@@ -338,7 +361,7 @@
         <h3>Quick table</h3>
         <table class="mini-table">
           <thead><tr><th>#</th><th>Team</th><th>P</th><th>Pts</th></tr></thead>
-          <tbody>
+          <tbody id="mini-standings-body">
             <tr><td>1</td><td>Green Machine</td><td>0</td><td>0</td></tr>
             <tr><td>2</td><td>Soccer Dads</td><td>0</td><td>0</td></tr>
             <tr><td>3</td><td>Donkeys</td><td>0</td><td>0</td></tr>
@@ -378,8 +401,8 @@
     </div>
     <div class="table-scroll">
       <table>
-        <thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead>
-        <tbody>
+        <thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th><th>Form</th></tr></thead>
+        <tbody id="standings-body">
           <tr><td>1</td><td>Green Machine</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
           <tr><td>2</td><td>Soccer Dads</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
           <tr><td>3</td><td>Donkeys</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
@@ -871,6 +894,20 @@
     });
   });
 
+  // Per-round details (date label, venue, sunset) read from the Fixtures tab headers.
+  const ROUND_META = {};
+  document.querySelectorAll('#fixtures .round-block').forEach(block => {
+    const titleSpan = block.querySelector('.round-toggle > span:first-child');
+    const sub = titleSpan.querySelector('.sub');
+    const head = titleSpan.childNodes[0].textContent.split('\u00b7').map(t => t.trim());
+    const subText = sub ? sub.textContent : '';
+    ROUND_META[head[0]] = {
+      dateLabel: head[1] || '',
+      venue: subText.split('\u00b7')[0].trim(),
+      sunset: (subText.match(/sunset ~([\d:]+ [AP]M)/i) || [])[1] || ''
+    };
+  });
+
   // RESULTS: add one entry per completed match as the season goes on.
   // Example shape (uncomment / duplicate once a result is in):
   // { round: 'Round 1', home: 'Green Machine', away: 'Loose Cannons', homeScore: 3, awayScore: 1,
@@ -882,8 +919,7 @@
   // Last-5 form (W/D/L) for a team, most recent first, based on RESULTS logged so far.
   function teamForm(teamName) {
     const played = RESULTS.filter(r => r.home === teamName || r.away === teamName);
-    const last5 = played.slice(-5).reverse();
-    return last5.map(r => {
+    return played.slice(-5).map(r => {
       const isHome = r.home === teamName;
       const gf = isHome ? r.homeScore : r.awayScore;
       const ga = isHome ? r.awayScore : r.homeScore;
@@ -891,17 +927,73 @@
     });
   }
   function formDotsHTML(teamName) {
-    const form = teamForm(teamName);
-    if (form.length === 0) return '';
-    return form.map(r => `<span class="form-dot ${r}" title="${r === 'w' ? 'Win' : r === 'd' ? 'Draw' : 'Loss'}"></span>`).join('');
+    return teamForm(teamName).map(r => `<span class="form-badge ${r}" title="${r === 'w' ? 'Win' : r === 'd' ? 'Draw' : 'Loss'}">${r.toUpperCase()}</span>`).join('');
+  }
+
+  // Next round = first round whose match night is today or later (Sydney time).
+  function nextRoundName() {
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
+    const rounds = [...new Set(FIXTURES.map(f => f.round))];
+    return rounds.find(r => ROUND_DATES[r] >= today) || null;
+  }
+
+  function renderNextUpBanners() {
+    const round = nextRoundName();
+    document.querySelectorAll('.nextup').forEach(el => {
+      const label = el.querySelector('.label'), big = el.querySelector('.big'), when = el.querySelector('.when');
+      if (!round) {
+        label.textContent = 'Season wrap-up';
+        big.innerHTML = 'Finals &middot; Fri 11 December';
+        when.textContent = 'See Manager Info for finals details';
+        return;
+      }
+      const m = ROUND_META[round] || {};
+      const first = FIXTURES.find(f => f.round === round);
+      label.innerHTML = `Next up &middot; ${round}`;
+      big.innerHTML = `${m.dateLabel} &middot; ${m.venue}`;
+      when.textContent = `First kick-off ${first ? first.time : ''}${m.sunset ? ' \u00b7 Sunset ~' + m.sunset : ''}`;
+    });
+  }
+
+  // League table calculated from RESULTS (3 pts win, 1 draw).
+  function computeStandings() {
+    const rows = {};
+    Object.keys(TEAM_LOGOS).forEach(t => rows[t] = { team: t, p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0 });
+    RESULTS.forEach(r => {
+      const h = rows[r.home], a = rows[r.away];
+      if (!h || !a) return;
+      h.p++; a.p++;
+      h.gf += r.homeScore; h.ga += r.awayScore;
+      a.gf += r.awayScore; a.ga += r.homeScore;
+      if (r.homeScore > r.awayScore) { h.w++; a.l++; }
+      else if (r.homeScore < r.awayScore) { a.w++; h.l++; }
+      else { h.d++; a.d++; }
+    });
+    const list = Object.values(rows).map(x => ({ ...x, gd: x.gf - x.ga, pts: x.w * 3 + x.d }));
+    list.sort((x, y) => y.pts - x.pts || y.gd - x.gd || y.gf - x.gf || x.team.localeCompare(y.team));
+    return list;
+  }
+
+  function renderStandings() {
+    const list = computeStandings();
+    const cell = t => `${teamLogo(t)}${t}`;
+    const full = document.getElementById('standings-body');
+    if (full) {
+      full.innerHTML = list.map((x, i) => `<tr><td>${i + 1}</td><td data-team="${x.team}" style="cursor:pointer">${cell(x.team)}</td><td>${x.p}</td><td>${x.w}</td><td>${x.d}</td><td>${x.l}</td><td>${x.gf}</td><td>${x.ga}</td><td>${x.gd > 0 ? '+' : ''}${x.gd}</td><td><strong>${x.pts}</strong></td><td><span class="form-badges">${formDotsHTML(x.team) || '<span class="form-none">&ndash;</span>'}</span></td></tr>`).join('');
+    }
+    const mini = document.getElementById('mini-standings-body');
+    if (mini) {
+      mini.innerHTML = list.slice(0, 4).map((x, i) => `<tr><td>${i + 1}</td><td data-team="${x.team}" style="cursor:pointer">${cell(x.team)}</td><td>${x.p}</td><td>${x.pts}</td></tr>`).join('');
+    }
+    document.querySelectorAll('#standings-body td[data-team], #mini-standings-body td[data-team]').forEach(td => {
+      td.addEventListener('click', () => openTeamModal(td.dataset.team));
+    });
   }
 
   function renderUpcomingFixtures() {
     const container = document.getElementById('upcoming-fixtures-list');
     if (!container || FIXTURES.length === 0) return;
-    // Next round = the first round that has no result logged yet
-    const playedRounds = new Set(RESULTS.map(r => r.round));
-    const nextRound = FIXTURES.find(f => !playedRounds.has(f.round))?.round || FIXTURES[0].round;
+    const nextRound = nextRoundName() || FIXTURES[FIXTURES.length - 1].round;
     const upcoming = FIXTURES.filter(f => f.round === nextRound);
     container.innerHTML = upcoming.map(f => {
       const homeForm = formDotsHTML(f.home);
@@ -979,18 +1071,20 @@
       ? teamFixtures.map(f => {
           const opp = f.home === teamName ? f.away : f.home;
           const ha = f.home === teamName ? 'H' : 'A';
-          return `<div class="modal-fixture-row"><span class="r-label">${f.round}</span><span>${teamLogo(opp)}${opp} <span style="color:var(--muted)">(${ha})</span></span><span style="color:var(--muted)">${f.time}</span></div>`;
+          const idx = RESULTS.findIndex(r => r.round === f.round && (r.home === teamName || r.away === teamName));
+          let right = `<span style="color:var(--muted)">${f.time}</span>`;
+          let attrs = '';
+          if (idx >= 0) {
+            const r = RESULTS[idx];
+            const gf = r.home === teamName ? r.homeScore : r.awayScore;
+            const ga = r.home === teamName ? r.awayScore : r.homeScore;
+            const k = gf > ga ? 'w' : gf < ga ? 'l' : 'd';
+            right = `<span class="form-badge ${k}" style="margin-right:8px">${k.toUpperCase()}</span><strong>${gf}&ndash;${ga}</strong>`;
+            attrs = ` data-result-index="${idx}" style="cursor:pointer"`;
+          }
+          return `<div class="modal-fixture-row"${attrs}><span class="r-label">${f.round}</span><span style="flex:1">${teamLogo(opp)}${opp} <span style="color:var(--muted)">(${ha})</span></span><span style="display:flex;align-items:center">${right}</span></div>`;
         }).join('')
       : `<p class="modal-empty">No fixtures found.</p>`;
-
-    const teamResults = RESULTS.filter(r => r.home === teamName || r.away === teamName);
-    const resultsHTML = teamResults.length
-      ? teamResults.map(r => {
-          const opp = r.home === teamName ? r.away : r.home;
-          const score = r.home === teamName ? `${r.homeScore}-${r.awayScore}` : `${r.awayScore}-${r.homeScore}`;
-          return `<div class="modal-fixture-row"><span class="r-label">${r.round}</span><span>vs ${opp}</span><span style="color:var(--gold); font-weight:600;">${score}</span></div>`;
-        }).join('')
-      : `<p class="modal-empty">No results yet.</p>`;
 
     const scorers = topScorersForTeam(teamName);
     const scorersHTML = scorers.length
@@ -1006,34 +1100,22 @@
           ${colourChip}
         </div>
       </div>
-      <div class="modal-section"><h4>Fixtures</h4>${fixturesHTML}</div>
-      <div class="modal-section"><h4>Results</h4>${resultsHTML}</div>
+      <div class="modal-section"><h4>Fixtures &amp; results</h4>${fixturesHTML}</div>
       <div class="modal-section"><h4>Top scorers</h4>${scorersHTML}</div>
     `);
+    document.querySelectorAll('#modal-content .modal-fixture-row[data-result-index]').forEach(row => {
+      row.addEventListener('click', () => openScorersModal(RESULTS[parseInt(row.dataset.resultIndex)]));
+    });
   }
 
   function openScorersModal(result) {
-    const homeScorers = (result.scorers || []).filter(s => s.team === result.home);
-    const awayScorers = (result.scorers || []).filter(s => s.team === result.away);
-    const list = (arr) => arr.length
-      ? arr.map(s => `<div class="scorer-row"><span>${s.player}</span><span class="minute">${s.minute}'</span></div>`).join('')
-      : `<p class="modal-empty">No scorers logged.</p>`;
-    openModal(`
-      <div class="modal-score-big">
-        ${result.homeScore} &ndash; ${result.awayScore}
-        <span class="teams">${result.home} vs ${result.away} &middot; ${result.round}</span>
-      </div>
-      <div class="modal-section"><h4>${result.home} scorers</h4>${list(homeScorers)}</div>
-      <div class="modal-section"><h4>${result.away} scorers</h4>${list(awayScorers)}</div>
-    `);
+    openModal(`<div style="margin-top:6px"><div class="modal-section" style="margin-top:0"><h4>${result.round}</h4></div>${matchCardHTML(result)}</div>`);
   }
 
   document.querySelectorAll('#team-grid .team-card').forEach(card => {
     card.addEventListener('click', () => openTeamModal(card.dataset.name));
   });
 
-  renderResultsTab();
-  renderUpcomingFixtures();
 
   // --- Live weather (Open-Meteo, free, no API key, CORS-enabled) ---
   // Works when hosted on a real static host (e.g. GitHub Pages). Will fail silently
@@ -1091,8 +1173,7 @@
     const iconEl = document.getElementById('weather-icon');
     if (!tempEl) return;
 
-    const playedRounds = new Set(RESULTS.map(r => r.round));
-    const nextRound = FIXTURES.find(f => !playedRounds.has(f.round))?.round;
+    const nextRound = nextRoundName();
     const targetDate = ROUND_DATES[nextRound];
     if (!targetDate) {
       noteEl.textContent = 'No upcoming round found to fetch a forecast for.';
@@ -1126,10 +1207,159 @@
       noteEl.textContent = 'Live forecast unavailable right now (forecasts only cover roughly the next 10–16 days) — check back closer to match day.';
     }
   }
+
+  // --- Results feed ---------------------------------------------------------
+  // Paste the "Publish to web" CSV link of your results Google Sheet between the quotes.
+  // Leave it empty to use only the RESULTS array above.
+  // Sheet columns (row 1 = headers): Round | Home | Away | Home score | Away score | Home scorers | Away scorers
+  // Scorers are comma separated; add a number for multiple goals, e.g.  J. Smith 2, T. Nguyen
+  const RESULTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTFiOR6D-qda5EjFCmwdIzU5GSQypk7WySWLhiZMzySQ6U4hpYSgjlccB77tQJ_ZkkDdh0TKpDNEhRk/pub?gid=0&single=true&output=csv';
+
+  function parseCSV(text) {
+    const rows = []; let row = [], cur = '', q = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) {
+        if (c === '"' && text[i + 1] === '"') { cur += '"'; i++; }
+        else if (c === '"') q = false;
+        else cur += c;
+      } else if (c === '"') q = true;
+      else if (c === ',') { row.push(cur); cur = ''; }
+      else if (c === '\n' || c === '\r') {
+        if (c === '\r' && text[i + 1] === '\n') i++;
+        row.push(cur); cur = ''; rows.push(row); row = [];
+      } else cur += c;
+    }
+    if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+    return rows.filter(r => r.some(c => c.trim() !== ''));
+  }
+
+  function canonicalTeam(name) {
+    const n = (name || '').trim().toLowerCase();
+    return Object.keys(TEAM_LOGOS).find(t => t.toLowerCase() === n) || null;
+  }
+
+  // Scorers cell: names separated by commas. A trailing number (or xN / (N)) = number of goals.
+  //   "J. Smith 2, T. Nguyen"  ->  Smith x2, Nguyen x1
+  function parseScorers(cell, team) {
+    const out = [];
+    (cell || '').split(/[,;]/).map(x => x.trim()).filter(Boolean).forEach(x => {
+      const m = x.match(/^(.*?)\s*(?:x\s*|\(\s*)?(\d+)\s*\)?$/i);
+      const name = m && m[1] ? m[1].trim() : x;
+      const goals = m && m[1] ? Math.min(parseInt(m[2], 10), 10) : 1;
+      for (let i = 0; i < goals; i++) out.push({ team, player: name });
+    });
+    return out;
+  }
+
+  function resultsFromRows(rows) {
+    const out = [];
+    rows.forEach(c => {
+      const home = canonicalTeam(c[1]), away = canonicalTeam(c[2]);
+      const hs = parseInt(c[3], 10), as = parseInt(c[4], 10);
+      const roundNum = (c[0] || '').match(/\d+/);
+      if (!(c[3] || '').trim() && !(c[4] || '').trim()) return; // not played yet
+      if (!home || !away || isNaN(hs) || isNaN(as) || !roundNum) {
+        console.warn('Skipped results row (check team names / scores):', c);
+        return;
+      }
+      out.push({
+        round: 'Round ' + roundNum[0], home, away, homeScore: hs, awayScore: as,
+        scorers: [...parseScorers(c[5], home), ...parseScorers(c[6], away)]
+      });
+    });
+    return out;
+  }
+
+  // Sheet ID = the long code in the sheet's normal link: docs.google.com/spreadsheets/d/<SHEET_ID>/edit
+  // The sheet must be shared as "Anyone with the link can view". Uses a script tag (JSONP), which
+  // works on any host and from a local file, unlike fetch which Google blocks (CORS).
+  const RESULTS_SHEET_ID = '1ZZ4bfBdxO0P3zuBoPLBugPAlRsHRGk5id8nQ_t0thWA';
+
+  function loadResultsViaSheet() {
+    return new Promise((resolve, reject) => {
+      const cb = '__sheetCb' + Date.now();
+      const script = document.createElement('script');
+      const done = () => { delete window[cb]; script.remove(); };
+      window[cb] = data => {
+        done();
+        try {
+          const rows = (data.table.rows || []).map(r => (r.c || []).map(c => (c && c.v !== null && c.v !== undefined) ? String(c.v) : ''));
+          resolve(resultsFromRows(rows));
+        } catch (e) { reject(e); }
+      };
+      script.onerror = () => { done(); reject(new Error('Sheet request failed')); };
+      script.src = `https://docs.google.com/spreadsheets/d/${RESULTS_SHEET_ID}/gviz/tq?gid=0&headers=1&tqx=responseHandler:${cb}&_=${Date.now()}`;
+      document.head.appendChild(script);
+    });
+  }
+
+  const BALL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 8 L15.6 10.6 L14.2 14.8 H9.8 L8.4 10.6 Z"/><path d="M12 8 V2.8 M15.6 10.6 L20.6 9 M14.2 14.8 L17.4 19 M9.8 14.8 L6.6 19 M8.4 10.6 L3.4 9"/></svg>';
+  const TEAM_CARD_COLORS = {
+    'Green Machine': '#1F6B3A', 'Soccer Dads': '#137C74', 'Donkeys': '#4F6D8F', 'Dark Blue': '#1B2A6B',
+    'Soccerwhos': '#5B2A86', 'Off Rangers': '#4A5560', 'Udogie Style': '#2A2A2A', 'Loose Cannons': '#C0262D'
+  };
+  function matchCardHTML(r) {
+    const hc = TEAM_CARD_COLORS[r.home] || '#444', ac = TEAM_CARD_COLORS[r.away] || '#444';
+    const crest = n => `<span class="mc-crest"><img src="${TEAM_LOGOS[n]}" alt=""></span>`;
+    const col = (team, cls) => {
+      const counts = {};
+      (r.scorers || []).filter(x => x.team === team).forEach(x => counts[x.player] = (counts[x.player] || 0) + 1);
+      const items = Object.entries(counts).map(([pl, n]) => `<div class="mc-sc">${BALL_SVG}<span>${pl}${n > 1 ? ' &times;' + n : ''}</span></div>`).join('');
+      return `<div class="mc-col ${cls}">${items}</div>`;
+    };
+    const hasScorers = (r.scorers || []).length > 0;
+    return `<div class="mc">
+      <div class="mc-top" style="background: linear-gradient(90deg, ${hc} 0 50%, ${ac} 50% 100%)">
+        <div class="mc-team">${crest(r.home)}<span>${r.home}</span></div>
+        <div class="mc-score">${r.homeScore} - ${r.awayScore}</div>
+        <div class="mc-team">${crest(r.away)}<span>${r.away}</span></div>
+      </div>
+      <div class="mc-scorers">${hasScorers ? col(r.home, 'home') + col(r.away, 'away') : ''}</div>
+    </div>`;
+  }
+
+  function renderLatestResults() {
+    const box = document.getElementById('latest-results');
+    if (!box) return;
+    if (RESULTS.length === 0) { box.style.display = 'none'; return; }
+    const num = r => parseInt(r.round.replace(/\D/g, ''), 10);
+    const last = Math.max(...RESULTS.map(num));
+    const games = RESULTS.map((r, i) => ({ r, i })).filter(x => num(x.r) === last);
+    document.getElementById('latest-results-title').innerHTML = `Latest results &middot; Round ${last}`;
+    document.getElementById('latest-results-list').innerHTML = games.map(({ r }) => matchCardHTML(r)).join('');
+    box.style.display = '';
+  }
+
+  function refreshAll() {
+    renderLatestResults();
+    renderResultsTab();
+    renderStandings();
+    renderUpcomingFixtures();
+    renderNextUpBanners();
+  }
+
+  async function loadResults() {
+    try {
+      let parsed;
+      if (RESULTS_SHEET_ID) parsed = await loadResultsViaSheet();
+      else if (RESULTS_CSV_URL) {
+        const res = await fetch(RESULTS_CSV_URL, { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        parsed = resultsFromRows(parseCSV(await res.text()).slice(1));
+      } else return;
+      RESULTS.length = 0;
+      parsed.forEach(r => RESULTS.push(r));
+      refreshAll();
+    } catch (err) {
+      console.warn('Could not load results feed; showing built-in results only.', err);
+    }
+  }
+
+  refreshAll();
   loadLiveWeather();
+  loadResults();
 </script>
 
 </body>
 </html>
-
-</body></html>
