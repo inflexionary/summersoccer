@@ -486,7 +486,7 @@
   <section id="golden-boot" class="panel" role="tabpanel">
     <div class="section-head">
       <h2>Golden Boot</h2>
-      <p>Top scorers across the season. Updated as goalscorers are recorded after each round.</p>
+      <p>Top scorers across the season. Players who score for more than one team have their goals combined. Updated as goalscorers are recorded after each round.</p>
     </div>
     <div class="table-scroll">
       <table>
@@ -1189,7 +1189,7 @@
     const scorers = topScorersForTeam(teamName);
     const scorersHTML = scorers.length
       ? scorers.map(([player, goals]) => {
-          const b = boot.find(x => x.team === teamName && x.player.toLowerCase() === player.toLowerCase());
+          const b = boot.find(x => x.player.toLowerCase() === player.toLowerCase());
           const tag = b && b.rank <= 3 ? ` <span class="boot-tag r${b.rank}">Golden Boot #${b.rank}</span>` : '';
           return `<div class="scorer-row"><span>${player}${tag}</span><span>${goals} ${goals === 1 ? 'goal' : 'goals'}</span></div>`;
         }).join('')
@@ -1520,13 +1520,18 @@
   }
 
   function goldenBootList() {
+    // One entry per person (by name, case-insensitive), combining goals across every team they play for.
     const tally = {};
     [...RESULTS, ...Object.values(FINALS_RESULTS)].forEach(r => (r.scorers || []).forEach(x => {
-      const key = x.team + '|' + x.player.trim().toLowerCase();
-      if (!tally[key]) tally[key] = { player: x.player.trim(), team: x.team, goals: 0 };
+      const key = x.player.trim().toLowerCase();
+      if (!tally[key]) tally[key] = { player: x.player.trim(), teamGoals: {}, goals: 0 };
       tally[key].goals++;
+      tally[key].teamGoals[x.team] = (tally[key].teamGoals[x.team] || 0) + 1;
     }));
-    const list = Object.values(tally).sort((a, b) => b.goals - a.goals || a.player.localeCompare(b.player));
+    const list = Object.values(tally).map(x => {
+      const teams = Object.entries(x.teamGoals).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(e => e[0]);
+      return { player: x.player, goals: x.goals, teams, team: teams[0] };
+    }).sort((a, b) => b.goals - a.goals || a.player.localeCompare(b.player));
     let rank = 0, prev = null;
     list.forEach((x, i) => { if (x.goals !== prev) { rank = i + 1; prev = x.goals; } x.rank = rank; });
     return list;
@@ -1543,7 +1548,7 @@
     body.innerHTML = list.map((x, i) => {
       const rank = x.rank;
       const medal = rank <= 3 ? `<span class="rank-medal r${rank}">${rank}</span>` : rank;
-      return `<tr class="${rank === 1 ? 'boot-lead' : ''}" data-team="${x.team}" style="cursor:pointer"><td>${medal}</td><td>${x.player}</td><td>${teamLogo(x.team)}${x.team}</td><td class="boot-goals">${x.goals}</td></tr>`;
+      return `<tr class="${rank === 1 ? 'boot-lead' : ''}" data-team="${x.team}" style="cursor:pointer"><td>${medal}</td><td>${x.player}</td><td>${x.teams.map(t => teamLogo(t) + t).join(' <span style="opacity:.4">/</span> ')}</td><td class="boot-goals">${x.goals}</td></tr>`;
     }).join('');
     body.querySelectorAll('tr[data-team]').forEach(tr => tr.addEventListener('click', () => openTeamModal(tr.dataset.team)));
   }
