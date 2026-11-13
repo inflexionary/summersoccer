@@ -154,6 +154,9 @@
   .home-block { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; box-shadow: 0 1px 4px rgba(40,20,10,0.04); }
   .home-block h3 { font-size: 15px; color: var(--pitch); margin-bottom: 14px; }
   .home-block.span2 { grid-column: 1 / -1; }
+  .radar-wrap { position: relative; width: 100%; height: 380px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: #e9eef2; }
+  .radar-wrap iframe { width: 100%; height: 100%; border: 0; display: block; }
+  @media (max-width: 760px) { .radar-wrap { height: 300px; } }
   .mini-fixture { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
   .mini-fixture:last-child { border-bottom: none; }
   .mini-fixture .time { color: var(--muted); font-size: 13px; width: 58px; flex-shrink: 0; padding-top: 2px; }
@@ -401,6 +404,15 @@
         </div>
         <div class="weather-hourly" id="weather-hourly"></div>
         <div class="weather-note" id="weather-note">Loading live forecast&hellip;</div>
+      </div>
+
+      <div class="home-block span2" id="radar-block">
+        <h3>Live rain radar</h3>
+        <div class="radar-wrap">
+          <iframe id="radar-frame" title="Live rain radar near North Epping" loading="lazy" referrerpolicy="no-referrer"
+            src="https://www.rainviewer.com/map.html?loc=-33.7667,151.0833,9&amp;oFa=0&amp;oC=0&amp;oU=0&amp;oCS=1&amp;oF=0&amp;oAP=1&amp;c=1&amp;o=83&amp;lm=1&amp;layer=radar&amp;sm=1&amp;sn=1"></iframe>
+        </div>
+        <div class="weather-note">Live radar loop centred on North Epping, courtesy of RainViewer. If the map doesn't load, <a href="https://www.bom.gov.au/products/IDR713.loop.shtml" target="_blank" rel="noopener">open the BoM Sydney radar</a>.</div>
       </div>
 
       <div class="home-block">
@@ -1283,7 +1295,12 @@
     const iconEl = document.getElementById('weather-icon');
     if (!tempEl) return;
 
-    const nextRound = nextRoundName();
+    let nextRound = nextRoundName();
+    const nowSyd = new Date().toLocaleString('sv-SE', { timeZone: 'Australia/Sydney' }); // "YYYY-MM-DD HH:MM:SS"
+    if (nextRound && ROUND_DATES[nextRound] === nowSyd.slice(0, 10) && parseInt(nowSyd.slice(11, 13), 10) >= 21) {
+      const rs = [...new Set(FIXTURES.map(f => f.round))];
+      nextRound = rs[rs.indexOf(nextRound) + 1] || null;
+    }
     const targetDate = ROUND_DATES[nextRound];
     if (!targetDate) {
       noteEl.textContent = 'No upcoming round found to fetch a forecast for.';
@@ -1314,7 +1331,8 @@
       const dateLabel = d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
       noteEl.textContent = `Live forecast for ${dateLabel}, Sydney — updates automatically whenever this page loads.`;
     } catch (err) {
-      noteEl.textContent = 'Live forecast unavailable right now (forecasts only cover roughly the next 10–16 days) — check back closer to match day.';
+      console.warn('Weather load failed:', err);
+      noteEl.innerHTML = 'Live forecast unavailable right now (' + String(err && err.message || err).replace(/</g, '&lt;') + '). <a href="https://www.bom.gov.au/places/nsw/epping/forecast/" target="_blank" rel="noopener">See the BoM forecast</a>.';
     }
   }
 
