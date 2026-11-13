@@ -1309,9 +1309,18 @@
 
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=-33.88&longitude=151.21&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode&hourly=temperature_2m,precipitation_probability&timezone=Australia%2FSydney&start_date=${targetDate}&end_date=${targetDate}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('Weather API error ' + res.status);
-      const data = await res.json();
+      const fetchJSON = async () => {
+        const ctl = new AbortController();
+        const timer = setTimeout(() => ctl.abort(), 8000);
+        try {
+          const res = await fetch(url, { signal: ctl.signal, cache: 'no-store' });
+          if (!res.ok) throw new Error('Weather API error ' + res.status);
+          return await res.json();
+        } finally { clearTimeout(timer); }
+      };
+      let data;
+      try { data = await fetchJSON(); }
+      catch (e1) { noteEl.textContent = 'Still loading the forecast\u2026'; data = await fetchJSON(); } // one retry
       if (!data.daily || !data.daily.time || data.daily.time.length === 0) {
         throw new Error('No forecast data for that date yet');
       }
@@ -1332,7 +1341,7 @@
       noteEl.textContent = `Live forecast for ${dateLabel}, Sydney — updates automatically whenever this page loads.`;
     } catch (err) {
       console.warn('Weather load failed:', err);
-      noteEl.innerHTML = 'Live forecast unavailable right now (' + String(err && err.message || err).replace(/</g, '&lt;') + '). <a href="https://www.bom.gov.au/places/nsw/epping/forecast/" target="_blank" rel="noopener">See the BoM forecast</a>.';
+      noteEl.innerHTML = 'Live forecast unavailable right now (' + (err && err.name === 'AbortError' ? 'timed out' : String(err && err.message || err)).replace(/</g, '&lt;') + '). <a href="https://www.bom.gov.au/places/nsw/epping/forecast/" target="_blank" rel="noopener">See the BoM forecast</a>.';
     }
   }
 
