@@ -149,6 +149,13 @@
   .greeting { font-size: 14px; color: var(--muted); max-width: 62ch; margin-bottom: 24px; }
 
   /* HOME */
+  .pay-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; padding: 16px 20px; border-radius: 14px; color: #fff; background: linear-gradient(135deg, var(--pitch-dark), var(--pitch) 55%, var(--accent2)); box-shadow: 0 4px 14px rgba(143,68,18,0.25); }
+  .pay-banner .pb-title { font-family: 'Arvo', serif; font-weight: 700; font-size: 18px; }
+  .pay-banner .pb-sub { font-size: 13.5px; opacity: .92; margin-top: 2px; }
+  .pay-banner .pb-btn { background: #fff; color: var(--pitch-dark); text-decoration: none; font-weight: 800; font-size: 15px; padding: 12px 22px; border-radius: 999px; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.18); }
+  .pay-banner .pb-btn:hover { transform: translateY(-1px); }
+  @media (max-width: 560px) { .pay-banner .pb-btn { width: 100%; text-align: center; } }
+  .tab-btn.pay-tab { color: var(--pitch); font-weight: 700; }
   .home-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; align-items: start; }
   @media (max-width: 760px) { .home-grid { grid-template-columns: 1fr; } }
   .home-block { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; box-shadow: 0 1px 4px rgba(40,20,10,0.04); }
@@ -364,13 +371,20 @@
     <button class="tab-btn" role="tab" data-tab="golden-boot" aria-selected="false">Golden Boot</button>
     <button class="tab-btn" role="tab" data-tab="teams" aria-selected="false">Teams</button>
     <button class="tab-btn" role="tab" data-tab="manager-info" aria-selected="false">Manager Info</button>
-    <button class="tab-btn" role="tab" data-tab="payment" aria-selected="false">Payment</button>
+    <button class="tab-btn pay-tab" role="tab" data-tab="payment" aria-selected="false">Payment</button>
   </div>
 </nav>
 
 <main>
 
   <section id="home" class="panel active" role="tabpanel">
+    <div class="pay-banner">
+      <div class="pb-text">
+        <div class="pb-title">Player registration &amp; payment</div>
+        <div class="pb-sub">$50 &middot; register and pay on the NER shop</div>
+      </div>
+      <a class="pb-btn" href="https://shop.ner.org.au/product/ner-football-senior-summer-soccer-player-registration/72" target="_blank" rel="noopener">Register &amp; pay &rarr;</a>
+    </div>
     <div class="nextup">
       <div>
         <div class="label">Next up &middot; Round 1</div>
